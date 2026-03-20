@@ -161,10 +161,13 @@ const loadRDKit = async () => {
 	const wasmPath = [assetPath, 'RDKit_minimal.wasm'].join('/');
 	await checkOrDownload('RDKit_minimal.wasm');
 
-	const rdkitBundler = document.body.createEl('script');
-	rdkitBundler.type = 'text/javascript';
-	rdkitBundler.id = 'chem-rdkit-bundler';
-	rdkitBundler.innerHTML = await app.vault.adapter.read(jsPath);
+	const jsUrl = URL.createObjectURL(
+		new Blob([await app.vault.adapter.read(jsPath)], {
+			type: 'text/javascript',
+		})
+	);
+	await loadRDKitScript(jsUrl);
+	URL.revokeObjectURL(jsUrl);
 
 	const getWasmURL = async () =>
 		URL.createObjectURL(
@@ -173,21 +176,19 @@ const loadRDKit = async () => {
 			})
 		);
 	const url = await getWasmURL();
-	const RDKit = await window.initRDKitModule({
-		locateFile: () => url,
-	});
-	URL.revokeObjectURL(url);
-	return RDKit;
+	try {
+		return await window.initRDKitModule({
+			locateFile: () => url,
+		});
+	} finally {
+		URL.revokeObjectURL(url);
+	}
 };
 
 // See https://github.com/rdkit/rdkit-js/issues/160
 const loadRDKitUnpkg = async () => {
-	const rdkitBundler = document.body.createEl('script');
 	new Notice('Fetching RDKit.js from unpkg...');
-
-	rdkitBundler.innerHTML = await requestUrl(
-		'https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js'
-	).text;
+	await loadRDKitScript('https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js');
 
 	const RDKit = await window.initRDKitModule({
 		locateFile: () => 'https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm',
@@ -195,6 +196,19 @@ const loadRDKitUnpkg = async () => {
 	new Notice('RDKit.js has been successfully loaded.');
 	return RDKit;
 };
+
+const loadRDKitScript = (src: string) =>
+	new Promise<void>((resolve, reject) => {
+		const rdkitBundler = document.body.createEl('script');
+		rdkitBundler.type = 'text/javascript';
+		rdkitBundler.id = 'chem-rdkit-bundler';
+		rdkitBundler.src = src;
+		rdkitBundler.onload = () => resolve();
+		rdkitBundler.onerror = () => {
+			rdkitBundler.remove();
+			reject(new Error(`Failed to load RDKit script from ${src}.`));
+		};
+	});
 
 const fetchAsset = async (target: string, localPath: string) => {
 	const app = getApp();
