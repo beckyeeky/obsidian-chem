@@ -119,8 +119,25 @@ export function inlinePlugin(settings: ChemPluginSettings) {
 				} else if (update.selectionSet) {
 					this.updateTree(update.view);
 				} else if (update.viewportChanged /*|| update.selectionSet*/) {
-					this.decorations = this.inlineRender(update.view) ?? Decoration.none;
+					this.updateViewport(update.view);
 				}
+			}
+
+			/**
+			 * iOS resizes the editor viewport while the soft keyboard opens.  Do
+			 * not rebuild every visible widget in response: retain decorations
+			 * that remain visible, discard only those outside the viewport, then
+			 * add widgets for the newly visible ranges.
+			 */
+			updateViewport(view: EditorView) {
+				const visibleRanges = view.visibleRanges;
+				this.decorations = this.decorations.update({
+					filter: (from, to) =>
+						visibleRanges.some(
+							(range) => range.from <= to && range.to >= from
+						),
+				});
+				this.updateTree(view);
 			}
 
 			updateTree(view: EditorView) {

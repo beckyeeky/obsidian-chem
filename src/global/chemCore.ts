@@ -3,6 +3,7 @@ import { ChemPluginSettings } from 'src/settings/base';
 import type { ChemCore } from 'src/lib/core/ChemCore';
 import SmilesDrawerCore from '../lib/core/smilesDrawerCore';
 import RDKitCore from '../lib/core/rdkitCore';
+import { CachedChemCore } from '../lib/core/renderCache';
 
 export let gRenderCore: ChemCore;
 
@@ -12,11 +13,11 @@ export const setCore = async (
 ) => {
 	if (!gRenderCore || settings.core !== gRenderCore.id) {
 		if (settings.core === 'smiles-drawer') {
-			gRenderCore = new SmilesDrawerCore(settings);
+			gRenderCore = new CachedChemCore(new SmilesDrawerCore(settings));
 			updateCoreSettings(settings);
 		} else if (settings.core === 'rdkit') {
 			try {
-				gRenderCore = await RDKitCore.init(settings);
+				gRenderCore = new CachedChemCore(await RDKitCore.init(settings));
 				updateCoreSettings(settings);
 			} catch (error) {
 				onFallback(error);
@@ -28,7 +29,7 @@ export const setCore = async (
 };
 
 export const setFallbackCore = async (settings: ChemPluginSettings) => {
-	gRenderCore = new SmilesDrawerCore(settings);
+	gRenderCore = new CachedChemCore(new SmilesDrawerCore(settings));
 	updateCoreSettings(settings);
 };
 

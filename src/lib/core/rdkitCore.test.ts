@@ -13,7 +13,9 @@ jest.mock(
 );
 
 import { DEFAULT_SETTINGS } from 'src/settings/base';
-import RDKitCore from './rdkitCore';
+import RDKitCore, { applyReactionTheme } from './rdkitCore';
+import { RGB2hex } from '../themes/helpers';
+import { convertToRDKitTheme } from '../themes/theme';
 
 const moleculeSvg = '<svg width="100" height="50"></svg>';
 const reactionSvg = '<svg width="120" height="60"></svg>';
@@ -142,5 +144,47 @@ describe('RDKitCore WASM object lifetime', () => {
 
 	test('releases a reaction when SVG generation throws', async () => {
 		await expectReleaseAfterFailure('CCO>>CC=O', 'get_rxn');
+	});
+
+	test('applies the selected theme and transparent background to reaction SVGs', async () => {
+		const loadRDKit = initRDKitModule as unknown as () => Promise<{
+			get_rxn(source: string): {
+				delete(): void;
+				get_svg_with_highlights(details: string): string;
+			};
+		}>;
+		const core = await loadRDKit();
+		const settings = {
+			...DEFAULT_SETTINGS,
+			rdkitOptions: { clearBackground: true },
+		};
+		const rdkit = new RDKitCore(settings, core as never);
+		const theme = convertToRDKitTheme('rdkit-dark');
+
+		await rdkit.draw('CCO>>CC=O', 'rdkit-dark');
+
+		const svg = renderedMarkup.at(-1) ?? '';
+		expect(svg).not.toContain('fill:#FFFFFF;stroke:none');
+		expect(svg).toContain(`fill='${RGB2hex(theme[8])}'`);
+		expect(svg).toContain(`stroke:${RGB2hex(theme[6])}`);
+		expect(svg).toContain(`stroke:${RGB2hex(theme[-1])}`);
+		// The reaction arrow keeps all three RDKit-generated paths, including its head.
+		expect(svg).toContain('M 68.0,12.0 L 112.0,12.0');
+		expect(svg.match(/M 112\.0,12\.0/g) ?? []).toHaveLength(2);
+	});
+
+	test('themes reaction atom, bond, annotation, and arrow elements by SVG class', () => {
+		const theme = convertToRDKitTheme('rdkit-dark');
+		const svg = applyReactionTheme(
+			"<svg><rect style='fill:#FFFFFF;stroke:none'> </rect><path class='atom-0' style='fill:#000000'/><path class='bond-0' style='stroke:#7F7F7F'/><path class='note' style='fill:#000000'/><path style='stroke:#000000'/></svg>",
+			theme,
+			true
+		);
+
+		expect(svg).not.toContain('<rect');
+		expect(svg).toContain(`fill:${RGB2hex(theme[6])}`);
+		expect(svg).toContain(`stroke:${RGB2hex(theme[6])}`);
+		expect(svg).toContain(`fill:${RGB2hex(theme[-1])}`);
+		expect(svg).toContain(`stroke:${RGB2hex(theme[-1])}`);
 	});
 });

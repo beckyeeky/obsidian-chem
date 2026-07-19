@@ -5,6 +5,7 @@ import { ChemPluginSettings } from 'src/settings/base';
 import { DEFAULT_RDKIT_OPTIONS } from 'src/lib/core/rdkitOptions';
 import { convertToRDKitTheme } from 'src/lib/themes/theme';
 import { getCurrentTheme } from 'src/lib/themes/getCurrentTheme';
+import { RGB2hex, type RGBDecimal } from 'src/lib/themes/helpers';
 
 import { normalizePath, requestUrl, Notice } from 'obsidian';
 import { i18n } from '../i18n';
@@ -51,7 +52,7 @@ export default class RDKitCore implements ChemCore {
 			const rxn = this.core.get_rxn(source);
 			if (!rxn) return this.logError(source);
 			try {
-				svgstr = await this.drawReaction(rxn);
+				svgstr = await this.drawReaction(rxn, theme);
 			} finally {
 				rxn.delete();
 			}
@@ -103,14 +104,19 @@ export default class RDKitCore implements ChemCore {
 		return svg;
 	};
 
-	private drawReaction = async (rxn: JSReaction) => {
+	private drawReaction = async (rxn: JSReaction, theme: string) => {
 		const svgstr = rxn.get_svg_with_highlights(
 			JSON.stringify({
 				width: -1,
 				height: -1,
 			})
 		);
-		return svgstr;
+		const options = { ...DEFAULT_RDKIT_OPTIONS, ...this.settings.rdkitOptions };
+		return applyReactionTheme(
+			svgstr,
+			convertToRDKitTheme(theme),
+			options.clearBackground
+		);
 	};
 
 	private drawMolecule = async (mol: JSMol, theme: string) => {
@@ -151,6 +157,59 @@ export default class RDKitCore implements ChemCore {
 		return div;
 	};
 }
+
+/**
+ * `JSReaction.get_svg_with_highlights()` currently ignores RDKit drawing
+ * options such as palettes and clearBackground.  Keep the workaround here,
+ * rather than passing ineffective options to the wrapper, so it can be
+ * removed cleanly when RDKit.js supports reaction drawing options.
+ */
+export const applyReactionTheme = (
+	svg: string,
+	palette: Record<number, RGBDecimal>,
+	clearBackground: boolean
+): string => {
+	const colour = (atomicNumber: number) =>
+		RGB2hex(palette[atomicNumber] ?? palette[6]);
+	const defaultColours: Record<string, string> = {
+		'#000000': colour(6),
+		'#7f7f7f': colour(6),
+		'#0000ff': colour(7),
+		'#ff0000': colour(8),
+		'#33cccc': colour(9),
+		'#ff8000': colour(15),
+		'#cccc00': colour(16),
+		'#00cc00': colour(17),
+		'#804d1a': colour(35),
+		'#a11ef0': colour(53),
+	};
+	const replaceColours = (tag: string, replacements = defaultColours) =>
+		tag.replace(
+			/#(?:[0-9a-f]{6})/gi,
+			(value) => replacements[value.toLowerCase()] ?? value
+		);
+
+	return svg
+		.replace(
+			/<rect\b[^>]*stroke:none[^>]*>\s*<\/rect>\s*/gi,
+			clearBackground ? '' : '$&'
+		)
+		.replace(/<[^>]+>/g, (tag) => {
+			if (!/<(?:path|text|ellipse|circle|polygon|polyline)\b/i.test(tag))
+				return tag;
+			const className = /\bclass=["']([^"']*)["']/i.exec(tag)?.[1] ?? '';
+			if (/\bnote\b/i.test(className)) {
+				return replaceColours(tag, {
+					...defaultColours,
+					'#000000': RGB2hex(palette[-1]),
+				});
+			}
+			if (!className) {
+				return tag.replace(/(?<=stroke:)#[0-9a-f]{6}/gi, RGB2hex(palette[-1]));
+			}
+			return replaceColours(tag);
+		});
+};
 
 // Credits to fenjalien/obsidian-typst for the idea of loading local wasm by building object url.
 // Initialize reference: https://github.com/rdkit/rdkit-js/tree/master/typescript
