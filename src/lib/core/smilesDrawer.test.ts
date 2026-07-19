@@ -3,7 +3,10 @@
 import { describe, expect, test } from '@jest/globals';
 
 interface SmilesDrawerParser {
-	SmiDrawer: new (moleculeOptions?: object, reactionOptions?: object) => {
+	SmiDrawer: new (
+		moleculeOptions?: object,
+		reactionOptions?: object
+	) => {
 		draw(
 			smiles: string,
 			target: SVGSVGElement,
@@ -31,7 +34,9 @@ require('../../../node_modules/smiles-drawer/dist/smiles-drawer.min.js');
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 	configurable: true,
-	value: () => ({ measureText: (text: string) => ({ width: text.length * 8 }) }),
+	value: () => ({
+		measureText: (text: string) => ({ width: text.length * 8 }),
+	}),
 });
 Object.defineProperty(SVGSVGElement.prototype, 'viewBox', {
 	configurable: true,
@@ -55,10 +60,7 @@ const parseWithPublishedEsmBundle = (smiles: string, reaction = false) => {
 
 const renderWithPublishedEsmBundle = (smiles: string) =>
 	new Promise<SVGSVGElement>((resolve, reject) => {
-		const svg = document.createElementNS(
-			'http://www.w3.org/2000/svg',
-			'svg'
-		);
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		Object.defineProperties(svg, {
 			width: { value: { baseVal: { value: 300 } } },
 			height: { value: { baseVal: { value: 300 } } },
@@ -71,7 +73,9 @@ describe('Smiles Drawer 2.4.1 regressions', () => {
 	test.each(['[H][H]', 'CCC[C-]', 'C=C=C', 'CC#C', 'CCO'])(
 		'parses molecule %s',
 		async (smiles) => {
-			await expect(parseWithPublishedEsmBundle(smiles)).resolves.toBeUndefined();
+			await expect(
+				parseWithPublishedEsmBundle(smiles)
+			).resolves.toBeUndefined();
 		}
 	);
 

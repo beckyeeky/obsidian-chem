@@ -130,6 +130,8 @@ export class CachedChemCore implements ChemCore {
 			selectedTheme,
 			stableStringify(this.renderer.settings),
 		].join('\u0000');
-		return this.cache.draw(key, () => this.renderer.draw(source, selectedTheme));
+		return this.cache.draw(key, () =>
+			this.renderer.draw(source, selectedTheme)
+		);
 	}
 }

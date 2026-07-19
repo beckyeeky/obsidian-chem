@@ -1,11 +1,15 @@
 import { describe, expect, test } from '@jest/globals';
-import { CachedChemCore, MAX_RENDER_CACHE_ENTRIES, RenderCache } from './renderCache';
+import {
+	CachedChemCore,
+	MAX_RENDER_CACHE_ENTRIES,
+	RenderCache,
+} from './renderCache';
 
 const element = (id: string) =>
 	({
 		id,
 		cloneNode: () => element(id),
-	} as unknown as SVGSVGElement);
+	}) as unknown as SVGSVGElement;
 
 describe('RenderCache', () => {
 	test('returns independent clones while deduplicating an in-flight render', async () => {
@@ -79,7 +83,10 @@ describe('RenderCache', () => {
 		await core.draw('CCO', 'light');
 		await core.draw('CCO', 'light');
 		await core.draw('CCO', 'dark');
-		core.settings = { core: 'smiles-drawer', commonOptions: { width: 400 } } as never;
+		core.settings = {
+			core: 'smiles-drawer',
+			commonOptions: { width: 400 },
+		} as never;
 		await core.draw('CCO', 'dark');
 
 		expect(calls).toBe(3);

@@ -1,11 +1,11 @@
 # Render-performance validation
 
 This repository's deterministic editor fixture is the following Markdown body.
-Run it as a note with the renderer set first to Smiles Drawer, then RDKit.  Use
+Run it as a note with the renderer set first to Smiles Drawer, then RDKit. Use
 the same content for the 0, 12, and 24-structure cases (delete all but the
 requested number of inline expressions).
 
-```markdown
+````markdown
 `$smiles=CCO` `$smiles=CC(=O)O` `$smiles=c1ccccc1` `$smiles=CCN`
 `$smiles=CCCl` `$smiles=CCBr` `$smiles=C=C=C` `$smiles=CC#C`
 `$smiles=[H][H]` `$smiles=CCC[C-]` `$smiles=CCO>>CC=O`
@@ -25,6 +25,8 @@ CCC[C-]
 CCO>>CC=O
 CC(=O)Oc1ccccc1C(=O)O
 ```
+````
+
 ```
 
 For each renderer, inline and fenced-block case, record a cold run and a
@@ -50,3 +52,4 @@ verify a deliberate cache miss.
 Do not interpret the cache unit test as iPad verification. Attach a real-device
 trace and the before/after measurements to Issue #4 before closing the upstream
 typing-latency report.
+```

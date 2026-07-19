@@ -133,9 +133,7 @@ export function inlinePlugin(settings: ChemPluginSettings) {
 				const visibleRanges = view.visibleRanges;
 				this.decorations = this.decorations.update({
 					filter: (from, to) =>
-						visibleRanges.some(
-							(range) => range.from <= to && range.to >= from
-						),
+						visibleRanges.some((range) => range.from <= to && range.to >= from),
 				});
 				this.updateTree(view);
 			}

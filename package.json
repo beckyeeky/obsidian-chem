@@ -9,7 +9,8 @@
 		"test": "jest --config jest.config.js",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ./src",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
 	},
 	"keywords": [
 		"chemistry",

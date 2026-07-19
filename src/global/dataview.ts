@@ -17,7 +17,9 @@ export interface DataviewPluginRef {
 		component: Component,
 		el: HTMLElement
 	) => {
-		evaluate: (expression: string) =>
+		evaluate: (
+			expression: string
+		) =>
 			| { successful: true; value: unknown }
 			| { successful: false; error: unknown };
 	};
@@ -30,7 +32,9 @@ export const getDataview = (): DataviewPluginRef => {
 	const app = getApp();
 	if (isPluginEnabled(app)) {
 		// Obsidian's Plugin API is untyped for third-party plugins.
-		gDataview = app.plugins.getPlugin('dataview') as DataviewPluginRef;
+		gDataview = app.plugins.getPlugin(
+			'dataview'
+		) as unknown as DataviewPluginRef;
 		return gDataview;
 	}
 	throw new Error(i18n.t('errors.dataview.title'));
