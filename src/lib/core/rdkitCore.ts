@@ -1,6 +1,6 @@
 import type { ChemCore } from './ChemCore';
 
-import { JSMol, RDKitModule, JSReaction } from '@rdkit/rdkit';
+import type { JSMol, RDKitModule, JSReaction } from '@rdkit/rdkit';
 import { ChemPluginSettings } from 'src/settings/base';
 import { DEFAULT_RDKIT_OPTIONS } from 'src/lib/core/rdkitOptions';
 import { convertToRDKitTheme } from 'src/lib/themes/theme';
@@ -50,16 +50,24 @@ export default class RDKitCore implements ChemCore {
 		if (source.includes('>')) {
 			const rxn = this.core.get_rxn(source);
 			if (!rxn) return this.logError(source);
-			svgstr = await this.drawReaction(rxn);
+			try {
+				svgstr = await this.drawReaction(rxn);
+			} finally {
+				rxn.delete();
+			}
 		} else {
 			const mol = this.core.get_mol(source, JSON.stringify({}));
 			if (!mol) return this.logError(source);
 
-			// https://greglandrum.github.io/rdkit-blog/posts/2024-01-11-using-abbreviations.html
-			if (this.settings.commonOptions.compactDrawing)
-				mol.condense_abbreviations();
+			try {
+				// https://greglandrum.github.io/rdkit-blog/posts/2024-01-11-using-abbreviations.html
+				if (this.settings.commonOptions.compactDrawing)
+					mol.condense_abbreviations();
 
-			svgstr = await this.drawMolecule(mol, theme);
+				svgstr = await this.drawMolecule(mol, theme);
+			} finally {
+				mol.delete();
+			}
 		}
 
 		const container = createDiv();
