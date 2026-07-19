@@ -69,11 +69,22 @@ const migrate_3_3 = (draft: ChemPluginSettingsV3): ChemPluginSettingsV3 => {
 	return { ...DEFAULT_SETTINGS, ...draft };
 };
 
-export const migrateSettings = (draft: any): ChemPluginSettingsV3 => {
+type LegacySettingsDraft =
+	| Partial<ChemPluginSettingsV1>
+	| Partial<ChemPluginSettingsV2>
+	| Partial<ChemPluginSettingsV3>
+	| null
+	| undefined;
+
+export const migrateSettings = (
+	draft: LegacySettingsDraft
+): ChemPluginSettingsV3 => {
 	if (!draft || Object.keys(draft).length === 0) return DEFAULT_SETTINGS;
 	if (!('version' in draft))
-		return migrate_1_3(draft); // v1
-	else if (draft.version === 'v2') return migrate_2_3(draft);
-	else if (draft.version === 'v3') return migrate_3_3(draft); // current
+		return migrate_1_3(draft as ChemPluginSettingsV1); // v1
+	else if (draft.version === 'v2')
+		return migrate_2_3(draft as ChemPluginSettingsV2);
+	else if (draft.version === 'v3')
+		return migrate_3_3(draft as ChemPluginSettingsV3); // current
 	return DEFAULT_SETTINGS; // consider branch coverage rate
 };

@@ -29,10 +29,10 @@ export default class RDKitCore implements ChemCore {
 		if (!window.RDKit) {
 			try {
 				window.RDKit = await loadRDKit();
-			} catch (e) {
+			} catch {
 				try {
 					window.RDKit = await loadRDKitUnpkg();
-				} catch (e) {
+				} catch {
 					throw Error(
 						"Initializing rdkit failed: Can't fetch resources from unpkg."
 					);

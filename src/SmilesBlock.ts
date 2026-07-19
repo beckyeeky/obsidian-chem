@@ -70,25 +70,26 @@ export class SmilesBlock extends MarkdownRenderChild {
 	}
 
 	private preprocess = async (source: string) => {
+		const dv = gDataview ?? getDataview();
 		const dvEl = this.el.createDiv();
 		this.el.appendChild(dvEl);
-		const api = gDataview.localApi(this.context.sourcePath, this, dvEl);
+		const api = dv.localApi(this.context.sourcePath, this, dvEl);
 
 		const isDQL = (source: string): boolean => {
-			const prefix = gDataview.settings.inlineQueryPrefix;
+			const prefix = dv.settings.inlineQueryPrefix;
 			return prefix.length > 0 && source.startsWith(prefix);
 		};
 		const isDataviewJs = (source: string): boolean => {
-			const prefix = gDataview.settings.inlineJsQueryPrefix;
+			const prefix = dv.settings.inlineJsQueryPrefix;
 			return prefix.length > 0 && source.startsWith(prefix);
 		};
 		const evaluateDQL = (row: string): string => {
-			const prefix = gDataview.settings.inlineQueryPrefix;
+			const prefix = dv.settings.inlineQueryPrefix;
 			const result = api.evaluate(row.substring(prefix.length).trim());
-			return result.successful ? result.value : row;
+			return result.successful ? String(result.value) : row;
 		};
 		const executeJs = async (row: string) => {
-			const prefix = gDataview.settings.inlineJsQueryPrefix;
+			const prefix = dv.settings.inlineJsQueryPrefix;
 			const code = row.substring(prefix.length).trim();
 
 			const func = new Function(
@@ -99,11 +100,11 @@ export class SmilesBlock extends MarkdownRenderChild {
 			return func(api)?.toString() ?? 'DataviewJS parsing error';
 		};
 
-		if (gDataview.settings.enableInlineDataview && isDQL(source)) {
+		if (dv.settings.enableInlineDataview && isDQL(source)) {
 			return evaluateDQL(source);
 		} else if (
-			gDataview.settings.enableDataviewJs &&
-			gDataview.settings.enableInlineDataviewJs &&
+			dv.settings.enableDataviewJs &&
+			dv.settings.enableInlineDataviewJs &&
 			isDataviewJs(source)
 		) {
 			return await executeJs(source);
@@ -197,9 +198,11 @@ export class SmilesBlock extends MarkdownRenderChild {
 
 			// Apply background color
 			if (!this.settings.copy.transparent) {
-				copyTheme.contains('rdkit')
-					? (ctx.fillStyle = getSDBGColor(copyTheme))
-					: (ctx.fillStyle = convertToSDTheme(copyTheme).BACKGROUND);
+				if (copyTheme.contains('rdkit')) {
+					ctx.fillStyle = getSDBGColor(copyTheme);
+				} else {
+					ctx.fillStyle = convertToSDTheme(copyTheme).BACKGROUND;
+				}
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 			}
 
@@ -211,11 +214,15 @@ export class SmilesBlock extends MarkdownRenderChild {
 					await navigator.clipboard
 						.write([new ClipboardItem({ 'image/png': blob })])
 						.then(
-							() => new Notice(i18n.t('menus.copy.success')),
-							() => new Notice(i18n.t('menus.copy.error'))
+							() => {
+								new Notice(i18n.t('menus.copy.success'));
+							},
+							() => {
+								new Notice(i18n.t('menus.copy.error'));
+							}
 						);
 				});
-			} catch (e) {
+			} catch {
 				new Notice(i18n.t('menus.copy.error'));
 			}
 

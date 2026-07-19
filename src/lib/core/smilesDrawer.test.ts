@@ -26,6 +26,7 @@ interface SmilesDrawerParser {
 
 // The browser bundle attaches its public API to window. Load it directly so
 // this test exercises the same DOM-facing renderer used by the plugin bundle.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('../../../node_modules/smiles-drawer/dist/smiles-drawer.min.js');
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {

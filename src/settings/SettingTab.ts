@@ -55,7 +55,11 @@ export class ChemSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 				this.updateCore();
 				onSettingsChange();
-				value === 0 ? unifyImageWidth() : unifyBondLength();
+				if (value === 0) {
+					unifyImageWidth();
+				} else {
+					unifyBondLength();
+				}
 			});
 
 		const widthSettings = new Setting(containerEl);
