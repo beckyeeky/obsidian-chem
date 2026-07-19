@@ -10,7 +10,7 @@ import { i18n } from 'src/lib/i18n';
 export default class SmilesDrawerCore implements ChemCore {
 	id: 'smiles-drawer';
 	settings: ChemPluginSettings;
-	core: SmilesDrawer.SmiDrawer;
+	core: InstanceType<typeof SmilesDrawer.SmiDrawer>;
 
 	constructor(settings: ChemPluginSettings) {
 		this.settings = settings;

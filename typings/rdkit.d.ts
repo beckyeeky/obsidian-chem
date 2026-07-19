@@ -16,6 +16,7 @@ declare module '@rdkit/rdkit' {
 		add_hs_in_place(): void;
 	}
 	interface JSReaction {
+		delete(): void;
 		draw_to_canvas(
 			canvas: HTMLCanvasElement,
 			width: number,
